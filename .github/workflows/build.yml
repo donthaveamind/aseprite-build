@@ -51,10 +51,22 @@ jobs:
             -DSKIA_LIBRARY=$HOME/src/deps/skia/out/Release-x64/libskia.a \
             -G Ninja ..
           ninja aseprite
-          
-      - name: upload bin folder
-        uses: actions/upload-artifact@v4
+
+      - name: compress release
+        run: |
+          cd ~/work/aseprite-build/aseprite-build/aseprite
+          tar czf aseprite_build.tar.gz ./build/bin/
+        
+      - name: Get Current Date
+        run: echo "RELEASE_TAG=aseprite-$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+        
+      - name: upload bin folder to release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: compiled-build
-          path: aseprite/build/bin/* # Change this if your build output is elsewhere
-          retention-days: 7
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Release ${{ env.RELEASE_TAG }}
+          files: |
+            aseprite/aseprite_build.tar.gz
