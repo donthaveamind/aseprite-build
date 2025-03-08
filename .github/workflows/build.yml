@@ -1,0 +1,55 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  run-on-repo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: clone aseprite
+        run: |
+          git clone --recursive https://github.com/aseprite/aseprite.git
+          cd aseprite
+          echo "$(pwd)"
+          ls
+          
+      - name: install dependencies
+        run: |
+          sudo apt install g++ clang libc++-dev libc++abi-dev cmake ninja-build libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev curl unzip -y
+        
+      - name: install skia
+        run: |
+          mkdir -p ~/src/deps/skia && curl -Lo ~/src/deps/skia/Skia-Linux-Release-x64-libc++.zip https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-Linux-Release-x64-libc++.zip
+          unzip ~/src/deps/skia/Skia-Linux-Release-x64-libc++.zip
+      - name: build aseprite
+        run: |
+          cd aseprite
+          mkdir build
+          cd build
+          export CC=clang
+          export CXX=clang++
+          cmake \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_CXX_FLAGS:STRING=--stdlib=libc++ \
+            -DCMAKE_EXE_LINKER_FLAGS:STRING=--stdlib=libc++ \
+            -DLAF_BACKEND=skia \
+            -DSKIA_DIR=$HOME/src/deps/skia \
+            -DSKIA_LIBRARY_DIR=$HOME/src/deps/skia/out/Release-x64 \
+            -DSKIA_LIBRARY=$HOME/src/deps/skia/out/Release-x64/libskia.a \
+            -G Ninja ..
+          ninja aseprite
+          
+      - name: upload bin folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-build
+          path: aseprite/bin/ # Change this if your build output is elsewhere
+          retention-days: 7
