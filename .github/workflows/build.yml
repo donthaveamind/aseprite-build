@@ -27,11 +27,16 @@ jobs:
         
       - name: install skia
         run: |
-          mkdir -p ~/src/deps/skia && curl -Lo ~/src/deps/skia/Skia-Linux-Release-x64-libc++.zip https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-Linux-Release-x64-libc++.zip
+          mkdir -p ~/src/deps/skia
+          cd ~/src/deps/skia
+          curl -LO https://github.com/aseprite/skia/releases/download/m102-861e4743af/Skia-Linux-Release-x64-libc++.zip
           unzip ~/src/deps/skia/Skia-Linux-Release-x64-libc++.zip
+          echo "$(pwd)"
+          ls
+          
       - name: build aseprite
         run: |
-          cd aseprite
+          cd ~/work/aseprite-build/aseprite-build/aseprite
           mkdir build
           cd build
           export CC=clang
